@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Kalkulator Umur Profesional</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              DEFAULT: '#2563eb',
+              dark: '#1e40af'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+<link rel="stylesheet" href="assets/css/custom.css" />
+</head>
+<body class="bg-slate-100 text-slate-900">
+  <div id="app" class="min-h-screen flex flex-col"></div>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/dateConfig.js"></script>
+<script src="assets/js/utils/dateUtils.js"></script>
+<script src="assets/js/components/LayoutHeader.js"></script>
+<script src="assets/js/components/ResultCard.js"></script>
+<script src="assets/js/components/FunFactsCard.js"></script>
+<script src="assets/js/components/AgeCalculator.js"></script>
+<script src="assets/js/main.js"></script>
+</body>
+</html>

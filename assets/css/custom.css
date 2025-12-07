@@ -1,0 +1,97 @@
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Animasi card popup ulang tahun - efek berdenyut (pulse) */
+.birthday-pulse-enter-active .popup-card,
+.birthday-pulse-leave-active .popup-card {
+  animation-duration: 0.45s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: both;
+}
+
+.birthday-pulse-enter-active .popup-card {
+  animation-name: birthdayPulseIn;
+}
+
+.birthday-pulse-leave-active .popup-card {
+  animation-name: birthdayPulseOut;
+}
+
+@keyframes birthdayPulseIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes birthdayPulseOut {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+
+.birthday-pulse-enter-active .popup-card {
+  outline: 3px solid red;
+}
+
+/* Card popup ulang tahun – animasi berdenyut saat muncul & menghilang */
+.popup-card {
+  animation: popupPulseIn 0.45s ease-out;
+  transform-origin: center;
+}
+
+.popup-card-closing {
+  animation: popupPulseOut 0.35s ease-in forwards;
+}
+
+@keyframes popupPulseIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes popupPulseOut {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
