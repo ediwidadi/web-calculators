@@ -1,5 +1,12 @@
+
+// assets/js/components/FunFactsCard.js
+
 window.FunFactsCard = {
   props: ['result', 'funFacts', 'birthDate'],
+
+  // gunakan template dari index.html
+  template: '#fun-facts-card-template',
+
   data() {
     return {
       liveTimeline: {
@@ -12,17 +19,18 @@ window.FunFactsCard = {
       timerId: null,
       lang: APP_CONFIG.LANG,
       showBirthdayPopup: false,
-      popupClosing: false, // <-- untuk animasi keluar
+      popupClosing: false, // untuk animasi keluar
       _confettiAnimationFrame: null,
       _confettiResizeHandler: null
     };
   },
+
   computed: {
     isID() {
       return this.lang === 'id';
     },
 
-    // Fun facts dihitung langsung di sini, berdasarkan totalDays, years, totalMonthsApprox
+    // FUN FACTS dihitung di sini
     funFactsComputed() {
       if (!this.result) {
         return {
@@ -79,250 +87,24 @@ window.FunFactsCard = {
       };
     }
   },
-  template: `
-    <section class="mt-6 bg-white rounded-xl shadow p-6 relative">
 
-      <!-- ===== POPUP SELAMAT ULANG TAHUN + CONFETTI (card animasi) ===== -->
-      <div
-        v-if="showBirthdayPopup"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-      >
-        <!-- kanvas confetti -->
-        <canvas
-          ref="confettiCanvas"
-          class="absolute inset-0 pointer-events-none"
-        ></canvas>
-
-        <!-- kartu popup (card) -->
-        <div
-          class="popup-card relative z-10 bg-white rounded-2xl shadow-xl w-[90%] max-w-sm p-6 text-center"
-          :class="{ 'popup-card-closing': popupClosing }"
-        >
-          <button
-            @click="closeBirthdayPopup"
-            class="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
-            aria-label="Close"
-          >
-            ✕
-          </button>
-
-          <div class="text-6xl mb-2">🎉</div>
-
-          <h3 class="text-xl font-bold text-brand mb-1">
-            <template v-if="isID">Selamat Ulang Tahun!</template>
-            <template v-else>Happy Birthday!</template>
-          </h3>
-
-          <p class="text-sm text-slate-600 mt-1">
-            <template v-if="isID">
-              Hari ini adalah hari spesialmu.  
-              Semoga panjang umur, sehat selalu, dan semua mimpimu tercapai.
-            </template>
-            <template v-else>
-              Today is your special day.  
-              Wishing you good health, happiness, and success always.
-            </template>
-          </p>
-
-          <button
-            @click="closeBirthdayPopup"
-            class="mt-5 w-full bg-brand hover:bg-brand-dark text-white py-2 rounded-lg font-semibold transition"
-          >
-            <template v-if="isID">Terima kasih</template>
-            <template v-else>Thank you</template>
-          </button>
-        </div>
-      </div>
-
-      <!-- Tanggal acuan -->
-      <p class="text-sm text-slate-700 mb-4">
-        <span class="font-medium">
-          {{ t('ageOnDateTitle') }}
-        </span>
-        <br />
-        <span class="text-slate-900">
-          {{ formatFullDate(result.targetDate) }}
-        </span>
-        <br />
-        <span class="text-[11px] text-slate-500">
-          {{ t('ageOnDateSubtitle') }}
-        </span>
-      </p>
-
-      <!-- NARASI UTAMA DENGAN BORDER JAHITAN -->
-      <div class="border-t border-b border-dashed border-slate-400 py-4 mb-6">
-        <p class="text-slate-700 leading-relaxed text-sm">
-          <template v-if="isID">
-            Kamu telah menjalani hidup selama
-            <strong>{{ formatInteger(result.years) }} tahun</strong>,
-            yaitu
-            <strong>{{ formatInteger(result.totalDays) }} hari</strong>
-            dan
-            <strong>{{ formatInteger(result.totalWeeks) }} minggu</strong>.
-            <br /><br />
-            Setiap hari adalah bagian kecil dari cerita panjang hidupmu.
-          </template>
-
-          <template v-else>
-            You have lived for
-            <strong>{{ formatInteger(result.years) }} years</strong>,
-            which equals
-            <strong>{{ formatInteger(result.totalDays) }} days</strong>
-            or
-            <strong>{{ formatInteger(result.totalWeeks) }} weeks</strong>.
-            <br /><br />
-            Every single day is a small part of your long life story.
-          </template>
-        </p>
-      </div>
-
-      <!-- GROWING AGE TIMELINE (REAL TIME) -->
-      <h3 class="font-semibold text-lg mt-2 mb-3 text-brand">
-        {{ t('growingTimelineTitle') }}
-      </h3>
-
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center text-sm">
-        <div class="p-3 bg-slate-50 rounded">
-          <div class="text-xs text-slate-500 mb-1">
-            {{ t('daysLabel') }}
-          </div>
-          <div class="text-lg font-semibold text-brand">
-            {{ formatInteger(liveTimeline.days) }}
-          </div>
-        </div>
-        <div class="p-3 bg-slate-50 rounded">
-          <div class="text-xs text-slate-500 mb-1">
-            {{ t('hoursLabel') }}
-          </div>
-          <div class="text-lg font-semibold text-brand">
-            {{ formatInteger(liveTimeline.hours) }}
-          </div>
-        </div>
-        <div class="p-3 bg-slate-50 rounded">
-          <div class="text-xs text-slate-500 mb-1">
-            {{ t('minutesLabel') }}
-          </div>
-          <div class="text-lg font-semibold text-brand">
-            {{ formatInteger(liveTimeline.minutes) }}
-          </div>
-        </div>
-        <div class="p-3 bg-slate-50 rounded">
-          <div class="text-xs text-slate-500 mb-1">
-            {{ t('secondsLabel') }}
-          </div>
-          <div class="text-lg font-semibold text-brand">
-            {{ formatInteger(liveTimeline.seconds) }}
-          </div>
-        </div>
-      </div>
-
-      <!-- NEXT BIRTHDAY -->
-      <h3 class="font-semibold text-lg mt-6 mb-3 text-brand">
-        {{ t('nextBirthdayTitle') }}
-      </h3>
-
-      <div v-if="nextBirthday" class="mb-4">
-        <table class="w-full text-sm text-slate-700 border-separate border-spacing-y-1">
-          <tbody>
-            <tr>
-              <td class="w-1/2">{{ t('nextBirthdayDateLabel') }}</td>
-              <td class="w-4 text-center">:</td>
-              <td>{{ formatFullDate(nextBirthday.date) }}</td>
-            </tr>
-            <tr>
-              <td>{{ t('monthsLeftLabel') }}</td>
-              <td class="text-center">:</td>
-              <td>
-                {{ nextBirthday.monthsLeft }}
-                {{ t('monthsLeftInline') }}
-                {{ nextBirthday.daysPart }}
-                {{ t('daysLeftInline') }}
-              </td>
-            </tr>
-            <tr>
-              <td>{{ t('daysLeftShortLabel') }}</td>
-              <td class="text-center">:</td>
-              <td>{{ formatInteger(nextBirthday.daysLeft) }} {{ t('daysLabel') }}</td>
-            </tr>
-            <tr>
-              <td>{{ t('hoursLeftLabel') }}</td>
-              <td class="text-center">:</td>
-              <td>
-                {{ formatInteger(nextBirthday.hoursLeft) }} {{ t('hoursLabel') }}
-              </td>
-            </tr>
-            <tr>
-              <td>{{ t('minutesLeftLabel') }}</td>
-              <td class="text-center">:</td>
-              <td>{{ formatInteger(nextBirthday.minutesLeft) }} {{ t('minutesLabel') }}</td>
-            </tr>
-            <tr>
-              <td>{{ t('secondsLeftLabel') }}</td>
-              <td class="text-center">:</td>
-              <td>{{ formatInteger(nextBirthday.secondsLeft) }} {{ t('secondsLabel') }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- FAKTA MENAKJUBKAN -->
-      <h3 class="font-semibold text-lg mt-6 mb-3 text-brand">
-        {{ t('funFactsTitle') }}
-      </h3>
-
-      <table class="w-full text-sm text-slate-700 border-separate border-spacing-y-1">
-        <tbody>
-          <tr>
-            <td class="w-1/2">{{ t('breathsLabel') }}</td>
-            <td class="w-4 text-center">:</td>
-            <td>{{ formatInteger(funFactsComputed.breaths) }}</td>
-          </tr>
-          <tr>
-            <td>{{ t('heartBeatsLabel') }}</td>
-            <td class="text-center">:</td>
-            <td>{{ formatInteger(funFactsComputed.heartBeats) }}</td>
-          </tr>
-          <tr>
-            <td>{{ t('laughsLabel') }}</td>
-            <td class="text-center">:</td>
-            <td>{{ formatInteger(funFactsComputed.laughs) }}</td>
-          </tr>
-          <tr>
-            <td>{{ t('sleepYearsLabel') }}</td>
-            <td class="text-center">:</td>
-            <td>{{ formatDecimal(funFactsComputed.sleepYears, 1) }}</td>
-          </tr>
-          <tr>
-            <td>{{ t('hairLengthLabel') }}</td>
-            <td class="text-center">:</td>
-            <td>{{ formatDecimal(funFactsComputed.hairLengthMeters, 2) }} m</td>
-          </tr>
-          <tr>
-            <td>{{ t('nailLengthLabel') }}</td>
-            <td class="text-center">:</td>
-            <td>{{ formatDecimal(funFactsComputed.nailLengthMeters, 2) }} m</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <p class="mt-4 text-xs text-slate-500">
-        {{ t('funFactsDisclaimer') }}
-      </p>
-    </section>
-  `,
   mounted() {
     this.startLiveTimeline();
     this.computeNextBirthday();
     this.checkBirthdayToday();
     window.addEventListener('app-language-changed', this.onLangChanged);
+    window.addEventListener('language-changed', this.onLangChanged);
   },
+
   beforeUnmount() {
     if (this.timerId) {
       clearInterval(this.timerId);
     }
     this.stopConfetti();
     window.removeEventListener('app-language-changed', this.onLangChanged);
+    window.removeEventListener('language-changed', this.onLangChanged);
   },
+
   watch: {
     birthDate() {
       this.startLiveTimeline();
@@ -330,6 +112,7 @@ window.FunFactsCard = {
       this.checkBirthdayToday();
     }
   },
+
   methods: {
     t(key) {
       return APP_CONFIG.t(key);
@@ -371,16 +154,15 @@ window.FunFactsCard = {
     },
 
     closeBirthdayPopup() {
-      if (this.popupClosing) return; // jangan dobel klik
+      if (this.popupClosing) return;
 
       this.popupClosing = true;
       this.stopConfetti();
 
-      // beri waktu animasi dulu, baru hilangkan popup
       setTimeout(() => {
         this.showBirthdayPopup = false;
         this.popupClosing = false;
-      }, 350); // harus sama dengan durasi animasi keluar
+      }, 350);
     },
 
     startConfetti() {

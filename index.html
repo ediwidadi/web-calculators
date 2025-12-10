@@ -21,18 +21,688 @@
     }
   </script>
 
-<link rel="stylesheet" href="assets/css/custom.css" />
+  <link rel="stylesheet" href="assets/css/custom.css" />
 </head>
 <body class="bg-slate-100 text-slate-900">
+
+  <!-- TEMPLATE UNTUK AgeCalculator -->
+  <template id="age-calculator-template">
+    <main class="flex-grow flex items-start justify-center pt-12">
+      <div class="max-w-xl w-full px-6">
+
+        <h2 class="text-2xl font-bold mb-2 text-brand text-center">
+          {{ t('calcTitle') }}
+        </h2>
+
+        <p class="text-xs sm:text-sm text-slate-600 text-center mb-6">
+          {{ t('usageIntroText') }}
+        </p>
+
+        <!-- Tanggal Lahir -->
+        <section class="mb-6">
+          <label class="block mb-2 font-medium">
+            {{ t('birthDateLabel') }}
+          </label>
+
+          <div class="flex gap-2 items-stretch">
+            <!-- 3 kolom input (DD / MM / YYYY) -->
+            <div class="grid grid-cols-3 gap-2 flex-1">
+              <!-- Hari -->
+              <div class="relative">
+                <button
+                  type="button"
+                  @click.stop="toggleDropdown('birthDay')"
+                  class="w-full border rounded px-3 py-2 text-center text-sm bg-white
+                         border-slate-300 focus:outline-none focus:ring focus:ring-brand/40
+                         flex items-center justify-between"
+                >
+                  <span class="flex-1 text-center">
+                    {{ birthDay ? formatTwoDigits(birthDay) : dayPlaceholder }}
+                  </span>
+                  <span class="ml-2 text-slate-400 text-xs">
+                    ▼
+                  </span>
+                </button>
+                <span class="pointer-events-none absolute top-1/2 right-[2.1rem] -translate-y-1/2
+                             h-[60%] w-[1px] bg-slate-200"></span>
+                <div
+                  v-if="isBirthDayOpen"
+                  class="absolute z-20 mt-1 w-full max-h-48 overflow-auto bg-white border border-slate-200 rounded shadow text-sm"
+                >
+                  <button
+                    v-for="d in dayOptions"
+                    :key="'bd-' + d"
+                    type="button"
+                    @click.stop="selectBirthDay(d)"
+                    class="w-full px-2 py-1 text-left hover:bg-slate-100"
+                  >
+                    {{ formatTwoDigits(d) }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Bulan -->
+              <div class="relative">
+                <button
+                  type="button"
+                  @click.stop="toggleDropdown('birthMonth')"
+                  class="w-full border rounded px-3 py-2 text-center text-sm bg-white
+                         border-slate-300 focus:outline-none focus:ring focus:ring-brand/40
+                         flex items-center justify-between"
+                >
+                  <span class="flex-1 text-center">
+                    {{ birthMonth ? getMonthLabel(birthMonth) : monthPlaceholder }}
+                  </span>
+                  <span class="ml-2 text-slate-400 text-xs">
+                    ▼
+                  </span>
+                </button>
+                <span class="pointer-events-none absolute top-1/2 right-[2.1rem] -translate-y-1/2
+                             h-[60%] w-[1px] bg-slate-200"></span>
+                <div
+                  v-if="isBirthMonthOpen"
+                  class="absolute z-20 mt-1 w-full max-h-48 overflow-auto bg-white border border-slate-200 rounded shadow text-sm"
+                >
+                  <button
+                    v-for="m in monthOptions"
+                    :key="'bm-' + m.value"
+                    type="button"
+                    @click.stop="selectBirthMonth(m.value)"
+                    class="w-full px-2 py-1 text-left hover:bg-slate-100"
+                  >
+                    {{ m.label }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Tahun -->
+              <div class="relative">
+                <button
+                  type="button"
+                  @click.stop="toggleDropdown('birthYear')"
+                  class="w-full border rounded px-3 py-2 text-center text-sm bg-white
+                         border-slate-300 focus:outline-none focus:ring focus:ring-brand/40
+                         flex items-center justify-between"
+                >
+                  <span class="flex-1 text-center">
+                    {{ birthYear || yearPlaceholder }}
+                  </span>
+                  <span class="ml-2 text-slate-400 text-xs">
+                    ▼
+                  </span>
+                </button>
+                <span class="pointer-events-none absolute top-1/2 right-[2.1rem] -translate-y-1/2
+                             h-[60%] w-[1px] bg-slate-200"></span>
+                <div
+                  v-if="isBirthYearOpen"
+                  class="absolute z-20 mt-1 w-full max-h-48 overflow-auto bg-white border border-slate-200 rounded shadow text-sm"
+                >
+                  <button
+                    v-for="y in yearOptions"
+                    :key="'by-' + y"
+                    type="button"
+                    @click.stop="selectBirthYear(y)"
+                    class="w-full px-2 py-1 text-left hover:bg-slate-100"
+                  >
+                    {{ y }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Kolom ikon kalender -->
+            <div class="relative">
+              <button
+                type="button"
+                @click.stop="toggleBirthCalendar"
+                class="h-full aspect-square border border-slate-300 rounded-lg
+                       flex items-center justify-center text-slate-600
+                       hover:bg-slate-50 focus:outline-none focus:ring focus:ring-brand/40"
+              >
+                <!-- ikon kalender -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M8 7V4m8 3V4M4 11h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tanggal Target -->
+        <section class="mb-6">
+          <label class="block mb-2 font-medium">
+            {{ t('targetDateLabel') }}
+          </label>
+
+          <div class="flex gap-2 items-stretch">
+            <!-- 3 kolom input (DD / MM / YYYY) -->
+            <div class="grid grid-cols-3 gap-2 flex-1">
+              <!-- Hari -->
+              <div class="relative">
+                <button
+                  type="button"
+                  @click.stop="toggleDropdown('targetDay')"
+                  class="w-full border rounded px-3 py-2 text-center text-sm bg-white
+                         border-slate-300 focus:outline-none focus:ring focus:ring-brand/40
+                         flex items-center justify-between"
+                >
+                  <span class="flex-1 text-center">
+                    {{ targetDay ? formatTwoDigits(targetDay) : dayPlaceholder }}
+                  </span>
+                  <span class="ml-2 text-slate-400 text-xs">
+                    ▼
+                  </span>
+                </button>
+                <span class="pointer-events-none absolute top-1/2 right-[2.1rem] -translate-y-1/2
+                             h-[60%] w-[1px] bg-slate-200"></span>
+                <div
+                  v-if="isTargetDayOpen"
+                  class="absolute z-20 mt-1 w-full max-h-48 overflow-auto bg-white border border-slate-200 rounded shadow text-sm"
+                >
+                  <button
+                    v-for="d in dayOptions"
+                    :key="'td-' + d"
+                    type="button"
+                    @click.stop="selectTargetDay(d)"
+                    class="w-full px-2 py-1 text-left hover:bg-slate-100"
+                  >
+                    {{ formatTwoDigits(d) }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Bulan -->
+              <div class="relative">
+                <button
+                  type="button"
+                  @click.stop="toggleDropdown('targetMonth')"
+                  class="w-full border rounded px-3 py-2 text-center text-sm bg-white
+                         border-slate-300 focus:outline-none focus:ring focus:ring-brand/40
+                         flex items-center justify-between"
+                >
+                  <span class="flex-1 text-center">
+                    {{ targetMonth ? getMonthLabel(targetMonth) : monthPlaceholder }}
+                  </span>
+                  <span class="ml-2 text-slate-400 text-xs">
+                    ▼
+                  </span>
+                </button>
+                <span class="pointer-events-none absolute top-1/2 right-[2.1rem] -translate-y-1/2
+                             h-[60%] w-[1px] bg-slate-200"></span>
+                <div
+                  v-if="isTargetMonthOpen"
+                  class="absolute z-20 mt-1 w-full max-h-48 overflow-auto bg-white border border-slate-200 rounded shadow text-sm"
+                >
+                  <button
+                    v-for="m in monthOptions"
+                    :key="'tm-' + m.value"
+                    type="button"
+                    @click.stop="selectTargetMonth(m.value)"
+                    class="w-full px-2 py-1 text-left hover:bg-slate-100"
+                  >
+                    {{ m.label }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Tahun -->
+              <div class="relative">
+                <button
+                  type="button"
+                  @click.stop="toggleDropdown('targetYear')"
+                  class="w-full border rounded px-3 py-2 text-center text-sm bg-white
+                         border-slate-300 focus:outline-none focus:ring focus:ring-brand/40
+                         flex items-center justify-between"
+                >
+                  <span class="flex-1 text-center">
+                    {{ targetYear || yearPlaceholder }}
+                  </span>
+                  <span class="ml-2 text-slate-400 text-xs">
+                    ▼
+                  </span>
+                </button>
+                <span class="pointer-events-none absolute top-1/2 right-[2.1rem] -translate-y-1/2
+                             h-[60%] w-[1px] bg-slate-200"></span>
+                <div
+                  v-if="isTargetYearOpen"
+                  class="absolute z-20 mt-1 w-full max-h-48 overflow-auto bg-white border border-slate-200 rounded shadow text-sm"
+                >
+                  <button
+                    v-for="y in yearOptions"
+                    :key="'ty-' + y"
+                    type="button"
+                    @click.stop="selectTargetYear(y)"
+                    class="w-full px-2 py-1 text-left hover:bg-slate-100"
+                  >
+                    {{ y }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Kolom ikon kalender -->
+            <div class="relative">
+              <button
+                type="button"
+                @click.stop="toggleTargetCalendar"
+                class="h-full aspect-square border border-slate-300 rounded-lg
+                       flex items-center justify-center text-slate-600
+                       hover:bg-slate-50 focus:outline-none focus:ring focus:ring-brand/40"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M8 7V4m8 3V4M4 11h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <p class="mt-1 text-[11px] text-slate-500">
+            {{ t('targetHint') }}
+          </p>
+        </section>
+
+        <button
+          @click="calculate"
+          class="w-full bg-brand hover:bg-brand-dark text-white py-2 rounded font-semibold transition-colors"
+        >
+          {{ t('calculateButton') }}
+        </button>
+
+        <p class="text-xs text-slate-500 mt-2">
+          {{ t('calcInfoText') }}
+        </p>
+
+        <p v-if="error" class="text-red-600 mt-3 text-sm">
+          {{ error }}
+        </p>
+
+<div v-if="hasCalculated && result" class="mt-6 space-y-4">
+  <result-card :result="result"></result-card>
+  <fun-facts-card
+    :result="result"
+    :fun-facts="funFacts"
+    :birth-date="birthDateObj"
+  ></fun-facts-card>
+</div>
+        <!-- POPUP KALENDER: TANGGAL LAHIR (melayang di tengah) -->
+        <div
+          v-if="showBirthCalendar"
+          class="fixed inset-0 z-40 flex items-center justify-center bg-black/20"
+          @click.self="showBirthCalendar = false"
+        >
+          <div class="bg-white border border-slate-200 rounded-xl shadow-lg p-3 text-xs w-[18rem] max-w-[90vw]">
+            <div class="flex items-center justify-between mb-2">
+              <button
+                type="button"
+                @click.stop="changeBirthMonth(-1)"
+                class="px-2 py-1 rounded hover:bg-slate-100"
+              >
+                ‹
+              </button>
+              <div class="font-semibold">
+                {{ getMonthLabel(birthCalendarConfig.month) }} {{ birthCalendarConfig.year }}
+              </div>
+              <button
+                type="button"
+                @click.stop="changeBirthMonth(1)"
+                class="px-2 py-1 rounded hover:bg-slate-100"
+              >
+                ›
+              </button>
+            </div>
+
+            <div class="grid grid-cols-7 gap-1 text-[11px] text-slate-500 mb-1">
+              <span
+                v-for="w in weekLabels"
+                :key="'bw-' + w"
+                class="text-center"
+              >
+                {{ w }}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-7 gap-1">
+            
+            
+             <button
+  v-for="(cell, idx) in birthCalendarConfig.cells"
+  :key="'bc-' + idx"
+  type="button"
+  class="w-7 h-7 flex items-center justify-center rounded text-xs"
+  :class="[
+    cell ? 'hover:bg-brand/10 hover:text-brand cursor-pointer' : '',
+    cell && isBirthSelected(cell) ? 'bg-brand text-white' : ''
+  ]"
+  @click.stop="cell && pickBirthFromCalendar(cell)"
+>
+  <span v-if="cell">{{ cell.day }}</span>
+</button>
+         
+         
+         
+            </div>
+          </div>
+        </div>
+
+        <!-- POPUP KALENDER: TANGGAL TARGET (melayang di tengah) -->
+        <div
+          v-if="showTargetCalendar"
+          class="fixed inset-0 z-40 flex items-center justify-center bg-black/20"
+          @click.self="showTargetCalendar = false"
+        >
+          <div class="bg-white border border-slate-200 rounded-xl shadow-lg p-3 text-xs w-[18rem] max-w-[90vw]">
+            <div class="flex items-center justify-between mb-2">
+              <button
+                type="button"
+                @click.stop="changeTargetMonth(-1)"
+                class="px-2 py-1 rounded hover:bg-slate-100"
+              >
+                ‹
+              </button>
+              <div class="font-semibold">
+                {{ getMonthLabel(targetCalendarConfig.month) }} {{ targetCalendarConfig.year }}
+              </div>
+              <button
+                type="button"
+                @click.stop="changeTargetMonth(1)"
+                class="px-2 py-1 rounded hover:bg-slate-100"
+              >
+                ›
+              </button>
+            </div>
+
+            <div class="grid grid-cols-7 gap-1 text-[11px] text-slate-500 mb-1">
+              <span
+                v-for="w in weekLabels"
+                :key="'tw-' + w"
+                class="text-center"
+              >
+                {{ w }}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-7 gap-1">
+<button
+  v-for="(cell, idx) in targetCalendarConfig.cells"
+  :key="'tc-' + idx"
+  type="button"
+  class="w-7 h-7 flex items-center justify-center rounded text-xs"
+  :class="[
+    cell ? 'hover:bg-brand/10 hover:text-brand cursor-pointer' : '',
+    cell && isTargetSelected(cell) ? 'bg-brand text-white' : ''
+  ]"
+  @click.stop="cell && pickTargetFromCalendar(cell)"
+>
+  <span v-if="cell">{{ cell.day }}</span>
+</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </template>
+
+
+
+
+
+
+
+
+
+
+
+
+  <!-- TEMPLATE UNTUK FunFactsCard -->
+  <template id="fun-facts-card-template">
+    <section class="mt-6 bg-white rounded-xl shadow p-6 relative">
+
+      <!-- ===== POPUP SELAMAT ULANG TAHUN + CONFETTI (card animasi) ===== -->
+      <div
+        v-if="showBirthdayPopup"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      >
+        <!-- kanvas confetti -->
+        <canvas
+          ref="confettiCanvas"
+          class="absolute inset-0 pointer-events-none"
+        ></canvas>
+
+        <!-- kartu popup (card) -->
+        <div
+          class="popup-card relative z-10 bg-white rounded-2xl shadow-xl w-[90%] max-w-sm p-6 text-center"
+          :class="{ 'popup-card-closing': popupClosing }"
+        >
+          <button
+            @click="closeBirthdayPopup"
+            class="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+            aria-label="Close"
+          >
+            ✕
+          </button>
+
+          <div class="text-6xl mb-2">🎉</div>
+
+          <h3 class="text-xl font-bold text-brand mb-1">
+            <template v-if="isID">Selamat Ulang Tahun!</template>
+            <template v-else>Happy Birthday!</template>
+          </h3>
+
+          <p class="text-sm text-slate-600 mt-1">
+            <template v-if="isID">
+              Hari ini adalah hari spesialmu.  
+              Semoga panjang umur, sehat selalu, dan semua mimpimu tercapai.
+            </template>
+            <template v-else>
+              Today is your special day.  
+              Wishing you good health, happiness, and success always.
+            </template>
+          </p>
+
+          <button
+            @click="closeBirthdayPopup"
+            class="mt-5 w-full bg-brand hover:bg-brand-dark text-white py-2 rounded-lg font-semibold transition"
+          >
+            <template v-if="isID">Terima kasih</template>
+            <template v-else>Thank you</template>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tanggal acuan -->
+      <p class="text-sm text-slate-700 mb-4">
+        <span class="font-medium">
+          {{ t('ageOnDateTitle') }}
+        </span>
+        <br />
+        <span class="text-slate-900">
+          {{ formatFullDate(result.targetDate) }}
+        </span>
+        <br />
+        <span class="text-[11px] text-slate-500">
+          {{ t('ageOnDateSubtitle') }}
+        </span>
+      </p>
+
+      <!-- NARASI UTAMA DENGAN BORDER JAHITAN -->
+      <div class="border-t border-b border-dashed border-slate-400 py-4 mb-6">
+        <p class="text-slate-700 leading-relaxed text-sm">
+          <template v-if="isID">
+            Kamu telah menjalani hidup selama
+            <strong>{{ formatInteger(result.years) }} tahun</strong>,
+            yaitu
+            <strong>{{ formatInteger(result.totalDays) }} hari</strong>
+            dan
+            <strong>{{ formatInteger(result.totalWeeks) }} minggu</strong>.
+            <br /><br />
+            Setiap hari adalah bagian kecil dari cerita panjang hidupmu.
+          </template>
+
+          <template v-else>
+            You have lived for
+            <strong>{{ formatInteger(result.years) }} years</strong>,
+            which equals
+            <strong>{{ formatInteger(result.totalDays) }} days</strong>
+            or
+            <strong>{{ formatInteger(result.totalWeeks) }} weeks</strong>.
+            <br /><br />
+            Every single day is a small part of your long life story.
+          </template>
+        </p>
+      </div>
+
+      <!-- GROWING AGE TIMELINE (REAL TIME) -->
+      <h3 class="font-semibold text-lg mt-2 mb-3 text-brand">
+        {{ t('growingTimelineTitle') }}
+      </h3>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center text-sm">
+        <div class="p-3 bg-slate-50 rounded">
+          <div class="text-xs text-slate-500 mb-1">
+            {{ t('daysLabel') }}
+          </div>
+          <div class="text-lg font-semibold text-brand">
+            {{ formatInteger(liveTimeline.days) }}
+          </div>
+        </div>
+        <div class="p-3 bg-slate-50 rounded">
+          <div class="text-xs text-slate-500 mb-1">
+            {{ t('hoursLabel') }}
+          </div>
+          <div class="text-lg font-semibold text-brand">
+            {{ formatInteger(liveTimeline.hours) }}
+          </div>
+        </div>
+        <div class="p-3 bg-slate-50 rounded">
+          <div class="text-xs text-slate-500 mb-1">
+            {{ t('minutesLabel') }}
+          </div>
+          <div class="text-lg font-semibold text-brand">
+            {{ formatInteger(liveTimeline.minutes) }}
+          </div>
+        </div>
+        <div class="p-3 bg-slate-50 rounded">
+          <div class="text-xs text-slate-500 mb-1">
+            {{ t('secondsLabel') }}
+          </div>
+          <div class="text-lg font-semibold text-brand">
+            {{ formatInteger(liveTimeline.seconds) }}
+          </div>
+        </div>
+      </div>
+
+      <!-- NEXT BIRTHDAY -->
+      <h3 class="font-semibold text-lg mt-6 mb-3 text-brand">
+        {{ t('nextBirthdayTitle') }}
+      </h3>
+
+      <div v-if="nextBirthday" class="mb-4">
+        <table class="w-full text-sm text-slate-700 border-separate border-spacing-y-1">
+          <tbody>
+            <tr>
+              <td class="w-1/2">{{ t('nextBirthdayDateLabel') }}</td>
+              <td class="w-4 text-center">:</td>
+              <td>{{ formatFullDate(nextBirthday.date) }}</td>
+            </tr>
+            <tr>
+              <td>{{ t('monthsLeftLabel') }}</td>
+              <td class="text-center">:</td>
+              <td>
+                {{ nextBirthday.monthsLeft }}
+                {{ t('monthsLeftInline') }}
+                {{ nextBirthday.daysPart }}
+                {{ t('daysLeftInline') }}
+              </td>
+            </tr>
+            <tr>
+              <td>{{ t('daysLeftShortLabel') }}</td>
+              <td class="text-center">:</td>
+              <td>{{ formatInteger(nextBirthday.daysLeft) }} {{ t('daysLabel') }}</td>
+            </tr>
+            <tr>
+              <td>{{ t('hoursLeftLabel') }}</td>
+              <td class="text-center">:</td>
+              <td>
+                {{ formatInteger(nextBirthday.hoursLeft) }} {{ t('hoursLabel') }}
+              </td>
+            </tr>
+            <tr>
+              <td>{{ t('minutesLeftLabel') }}</td>
+              <td class="text-center">:</td>
+              <td>{{ formatInteger(nextBirthday.minutesLeft) }} {{ t('minutesLabel') }}</td>
+            </tr>
+            <tr>
+              <td>{{ t('secondsLeftLabel') }}</td>
+              <td class="text-center">:</td>
+              <td>{{ formatInteger(nextBirthday.secondsLeft) }} {{ t('secondsLabel') }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- FAKTA MENAKJUBKAN -->
+      <h3 class="font-semibold text-lg mt-6 mb-3 text-brand">
+        {{ t('funFactsTitle') }}
+      </h3>
+
+      <table class="w-full text-sm text-slate-700 border-separate border-spacing-y-1">
+        <tbody>
+          <tr>
+            <td class="w-1/2">{{ t('breathsLabel') }}</td>
+            <td class="w-4 text-center">:</td>
+            <td>{{ formatInteger(funFactsComputed.breaths) }}</td>
+          </tr>
+          <tr>
+            <td>{{ t('heartBeatsLabel') }}</td>
+            <td class="text-center">:</td>
+            <td>{{ formatInteger(funFactsComputed.heartBeats) }}</td>
+          </tr>
+          <tr>
+            <td>{{ t('laughsLabel') }}</td>
+            <td class="text-center">:</td>
+            <td>{{ formatInteger(funFactsComputed.laughs) }}</td>
+          </tr>
+          <tr>
+            <td>{{ t('sleepYearsLabel') }}</td>
+            <td class="text-center">:</td>
+            <td>{{ formatDecimal(funFactsComputed.sleepYears, 1) }}</td>
+          </tr>
+          <tr>
+            <td>{{ t('hairLengthLabel') }}</td>
+            <td class="text-center">:</td>
+            <td>{{ formatDecimal(funFactsComputed.hairLengthMeters, 2) }} m</td>
+          </tr>
+          <tr>
+            <td>{{ t('nailLengthLabel') }}</td>
+            <td class="text-center">:</td>
+            <td>{{ formatDecimal(funFactsComputed.nailLengthMeters, 2) }} m</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="mt-4 text-xs text-slate-500">
+        {{ t('funFactsDisclaimer') }}
+      </p>
+    </section>
+  </template>
+
+
+  <!-- ROOT VUE APP -->
   <div id="app" class="min-h-screen flex flex-col"></div>
-<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-<script src="assets/js/config.js"></script>
-<script src="assets/js/dateConfig.js"></script>
-<script src="assets/js/utils/dateUtils.js"></script>
-<script src="assets/js/components/LayoutHeader.js"></script>
-<script src="assets/js/components/ResultCard.js"></script>
-<script src="assets/js/components/FunFactsCard.js"></script>
-<script src="assets/js/components/AgeCalculator.js"></script>
-<script src="assets/js/main.js"></script>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/dateConfig.js"></script>
+  <script src="assets/js/utils/dateUtils.js"></script>
+  <script src="assets/js/components/LayoutHeader.js"></script>
+  <script src="assets/js/components/ResultCard.js"></script>
+  <script src="assets/js/components/FunFactsCard.js"></script>
+  <script src="assets/js/components/AgeCalculator.js"></script>
+  <script src="assets/js/main.js"></script>
 </body>
 </html>
