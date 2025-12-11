@@ -6,7 +6,6 @@ window.AgeCalculator = {
     FunFactsCard: window.FunFactsCard
   },
 
-
   // Gunakan template dari index.html
   template: '#age-calculator-template',
 
@@ -57,7 +56,10 @@ window.AgeCalculator = {
       targetCalendarYear: null,
       targetCalendarMonth: null,
 
-      _clickOutsideHandler: null
+      _clickOutsideHandler: null,
+
+      // handler klik internal untuk menutup dropdown ketika tombol pemilih diklik
+      _internalClickHandler: null
     };
   },
 
@@ -101,41 +103,101 @@ window.AgeCalculator = {
         this.targetCalendarYear || base.getFullYear(),
         this.targetCalendarMonth || base.getMonth() + 1
       );
+    }, // <--- koma penting di sini
+
+    // opsi hari dinamis untuk tanggal lahir (1..maxDay)
+    birthDayOptions() {
+      const max = (this.birthYear && this.birthMonth)
+        ? this.getDaysInMonth(this.birthYear, this.birthMonth)
+        : 31;
+      return Array.from({ length: max }, (_, i) => i + 1);
+    },
+
+    // opsi hari dinamis untuk tanggal target (1..maxDay)
+    targetDayOptions() {
+      const max = (this.targetYear && this.targetMonth)
+        ? this.getDaysInMonth(this.targetYear, this.targetMonth)
+        : 31;
+      return Array.from({ length: max }, (_, i) => i + 1);
     }
   },
 
-  mounted() {
-    // load target date tersimpan
-    try {
-      const saved = sessionStorage.getItem(TARGET_DATE_STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && parsed.day && parsed.month && parsed.year) {
-          this.targetDay = String(parsed.day);
-          this.targetMonth = String(parsed.month);
-          this.targetYear = String(parsed.year);
-        }
+ mounted() {
+  // load target date tersimpan
+  try {
+    const saved = sessionStorage.getItem(TARGET_DATE_STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && parsed.day && parsed.month && parsed.year) {
+        this.targetDay = String(parsed.day);
+        this.targetMonth = String(parsed.month);
+        this.targetYear = String(parsed.year);
       }
-    } catch (e) {
-      console.warn('Gagal membaca target date dari sessionStorage:', e);
+    }
+  } catch (e) {
+    console.warn('Gagal membaca target date dari sessionStorage:', e);
+  }
+
+  // dengarkan perubahan bahasa
+  window.addEventListener('app-language-changed', this.onLangChanged);
+  window.addEventListener('language-changed', this.onLangChanged);
+  // reset saat tombol Home di header diklik
+  window.addEventListener('app-go-home', this.onGoHome);
+
+  // click di luar komponen → tutup dropdown & kalender
+  this._clickOutsideHandler = (e) => {
+    // jika komponen belum siap, abaikan
+    if (!this.$el) return;
+
+    const target = e.target instanceof Element ? e.target : null;
+
+    // 1) kalau klik berada di luar root komponen -> selalu tutup
+    if (!this.$el.contains(target)) {
+      this.closeAllDropdowns();
+      this.showBirthCalendar = false;
+      this.showTargetCalendar = false;
+      return;
     }
 
-    // dengarkan perubahan bahasa
-    window.addEventListener('app-language-changed', this.onLangChanged);
-    window.addEventListener('language-changed', this.onLangChanged);
-    // reset saat tombol Home di header diklik
-    window.addEventListener('app-go-home', this.onGoHome);
+    // 2) klik berada *di dalam* root — jika klik berada di dalam panel/popup, biarkan (tidak ditutup)
+    const inPanel = target && !!target.closest('.absolute.z-20, .fixed');
+    if (inPanel) {
+      return; // biarkan tombol panel sendiri menangani penutupan (mis. tombol option)
+    }
 
-    // click di luar komponen → tutup dropdown & kalender
-    this._clickOutsideHandler = (e) => {
-      if (!this.$el.contains(e.target)) {
+    // 3) klik berada di dalam komponen, tapi bukan di panel/popup.
+    //    Jika klik pada tombol toggle (mis. tombol yang membuka dropdown), jangan tutup:
+    const isToggle = target && !!target.closest('[data-dropdown-toggle="1"]');
+    if (isToggle) {
+      return;
+    }
+
+    // 4) selain kasus di atas -> tutup semua dropdown/popups
+    this.closeAllDropdowns();
+    this.showBirthCalendar = false;
+    this.showTargetCalendar = false;
+  };
+  document.addEventListener('click', this._clickOutsideHandler, true);
+
+  // Internal click handler: tombol-panel yang ditandai dengan data-close-dropdown akan memicu penutupan
+  this._internalClickHandler = (e) => {
+    if (!this.$el) return;
+    const el = e.target instanceof Element ? e.target.closest('[data-close-dropdown="1"]') : null;
+    if (el && this.$el.contains(el)) {
+      // tunda sedikit untuk memberi kesempatan handler tombol (mis. select) berjalan dulu
+      // lalu tutup dropdown
+      setTimeout(() => {
         this.closeAllDropdowns();
-        this.showBirthCalendar = false;
-        this.showTargetCalendar = false;
-      }
-    };
-    document.addEventListener('click', this._clickOutsideHandler);
-  },
+      }, 0);
+    }
+  };
+
+  // pasang handler capture di root element supaya kita dapat tangani tombol dinamis awal
+  this.$el.addEventListener('click', this._internalClickHandler, true);
+
+  // attach atribut data-close-dropdown & data-dropdown-toggle pada elemen dinamis
+  this._attachCloseAttributes();
+},
 
   beforeUnmount() {
     window.removeEventListener('app-language-changed', this.onLangChanged);
@@ -146,12 +208,27 @@ window.AgeCalculator = {
       document.removeEventListener('click', this._clickOutsideHandler);
       this._clickOutsideHandler = null;
     }
+
+    if (this._internalClickHandler && this.$el) {
+      this.$el.removeEventListener('click', this._internalClickHandler, true);
+      this._internalClickHandler = null;
+    }
   },
 
   watch: {
     targetDay() { this.persistTargetDate(); },
     targetMonth() { this.persistTargetDate(); },
-    targetYear() { this.persistTargetDate(); }
+    targetYear() { this.persistTargetDate(); },
+
+    // also re-attach attributes when panels open/close to ensure dynamic nodes are marked
+    isBirthDayOpen() { this.$nextTick(() => this._attachCloseAttributes()); },
+    isBirthMonthOpen() { this.$nextTick(() => this._attachCloseAttributes()); },
+    isBirthYearOpen() { this.$nextTick(() => this._attachCloseAttributes()); },
+    isTargetDayOpen() { this.$nextTick(() => this._attachCloseAttributes()); },
+    isTargetMonthOpen() { this.$nextTick(() => this._attachCloseAttributes()); },
+    isTargetYearOpen() { this.$nextTick(() => this._attachCloseAttributes()); },
+    showBirthCalendar() { this.$nextTick(() => this._attachCloseAttributes()); },
+    showTargetCalendar() { this.$nextTick(() => this._attachCloseAttributes()); }
   },
 
   methods: {
@@ -194,6 +271,79 @@ window.AgeCalculator = {
       }
     },
 
+    // === HELPERS UNTUK MENANDANAI TOMBOL YANG HARUS MENUTUP DROPDOWN ===
+    // Ini menambahkan attribute data-close-dropdown="1" ke tombol di panel dropdown dan popup kalender
+  _attachCloseAttributes() {
+  if (!this.$el) return;
+
+  // Hapus tanda lama dulu supaya idempotent
+  const oldTagged = this.$el.querySelectorAll('[data-close-dropdown], [data-dropdown-toggle="1"]');
+  oldTagged.forEach(n => {
+    n.removeAttribute('data-close-dropdown');
+    n.removeAttribute('data-dropdown-toggle');
+  });
+
+  // Tandai tombol di dalam panel dropdown (biasanya container absolute.z-20)
+  const dropdownPanels = Array.from(this.$el.querySelectorAll('.absolute.z-20'));
+  dropdownPanels.forEach(panel => {
+    const buttons = panel.querySelectorAll ? Array.from(panel.querySelectorAll('button, a')) : [];
+    buttons.forEach(b => b.setAttribute('data-close-dropdown', '1'));
+  });
+
+  // Tandai tombol di popup kalender (fixed modal)
+  const popupPanels = Array.from(this.$el.querySelectorAll('.fixed'));
+  popupPanels.forEach(panel => {
+    const buttons = panel.querySelectorAll ? Array.from(panel.querySelectorAll('button, a')) : [];
+    buttons.forEach(b => b.setAttribute('data-close-dropdown', '1'));
+  });
+
+  // Tandai tombol toggle yang membuka dropdown.
+  // Heuristik: tombol toggle biasanya punya caret "▼" / svg icon.
+  const allButtons = Array.from(this.$el.querySelectorAll('button'));
+  allButtons.forEach(btn => {
+    const txt = (btn.textContent || '').trim();
+    const hasCaret = txt.includes('▼') || txt.includes('▾');
+    const hasSvg = !!btn.querySelector('svg');
+    // Hanya tandai jika terlihat seperti tombol toggle (caret atau svg present)
+    if (hasCaret || hasSvg) {
+      btn.setAttribute('data-dropdown-toggle', '1');
+    }
+  });
+
+  // Pastikan link <a> yang ada juga menutup dropdown saat diklik
+  const anchors = Array.from(this.$el.querySelectorAll('a'));
+  anchors.forEach(a => a.setAttribute('data-close-dropdown', '1'));
+},
+
+    getDaysInMonth(year, month) {
+      const y = Number(year);
+      const m = Number(month);
+      if (!y || !m) return 31;
+      return new Date(y, m, 0).getDate();
+    },
+
+    normalizeBirthDate() {
+      if (!this.birthYear || !this.birthMonth || !this.birthDay) return;
+
+      const maxDay = this.getDaysInMonth(this.birthYear, this.birthMonth);
+      const currentDay = Number(this.birthDay);
+
+      if (currentDay > maxDay) {
+        this.birthDay = String(maxDay);
+      }
+    },
+
+    normalizeTargetDate() {
+      if (!this.targetYear || !this.targetMonth || !this.targetDay) return;
+
+      const maxDay = this.getDaysInMonth(this.targetYear, this.targetMonth);
+      const currentDay = Number(this.targetDay);
+
+      if (currentDay > maxDay) {
+        this.targetDay = String(maxDay);
+      }
+    },
+
     // === DROPDOWN CUSTOM HELPERS ===
     closeAllDropdowns() {
       this.isBirthDayOpen = false;
@@ -220,32 +370,46 @@ window.AgeCalculator = {
       const newState = !this[key];
       this.closeAllDropdowns();
       this[key] = newState;
+
+      // re-attach attributes because panel DOM might have been created
+      this.$nextTick(() => this._attachCloseAttributes());
     },
 
     selectBirthDay(d) {
       this.birthDay = String(d);
       this.isBirthDayOpen = false;
+      // ensure day options stay in-sync
+      this.$nextTick(() => this._attachCloseAttributes());
     },
     selectBirthMonth(m) {
       this.birthMonth = String(m);
       this.isBirthMonthOpen = false;
+      this.normalizeBirthDate();
+      this.$nextTick(() => this._attachCloseAttributes());
     },
     selectBirthYear(y) {
       this.birthYear = String(y);
       this.isBirthYearOpen = false;
+      this.normalizeBirthDate();
+      this.$nextTick(() => this._attachCloseAttributes());
     },
 
     selectTargetDay(d) {
       this.targetDay = String(d);
       this.isTargetDayOpen = false;
+      this.$nextTick(() => this._attachCloseAttributes());
     },
     selectTargetMonth(m) {
       this.targetMonth = String(m);
       this.isTargetMonthOpen = false;
+      this.normalizeTargetDate();
+      this.$nextTick(() => this._attachCloseAttributes());
     },
     selectTargetYear(y) {
       this.targetYear = String(y);
       this.isTargetYearOpen = false;
+      this.normalizeTargetDate();
+      this.$nextTick(() => this._attachCloseAttributes());
     },
 
     getMonthLabel(monthValue) {
@@ -309,6 +473,9 @@ window.AgeCalculator = {
       }
 
       this.showBirthCalendar = !wasOpen;
+
+      // re-attach attributes for popup buttons
+      this.$nextTick(() => this._attachCloseAttributes());
     },
 
     toggleTargetCalendar() {
@@ -328,6 +495,9 @@ window.AgeCalculator = {
       }
 
       this.showTargetCalendar = !wasOpen;
+
+      // re-attach attributes for popup buttons
+      this.$nextTick(() => this._attachCloseAttributes());
     },
 
     changeBirthMonth(delta) {
@@ -345,6 +515,7 @@ window.AgeCalculator = {
 
       this.birthCalendarYear = y;
       this.birthCalendarMonth = m;
+      this.$nextTick(() => this._attachCloseAttributes());
     },
 
     changeTargetMonth(delta) {
@@ -362,10 +533,10 @@ window.AgeCalculator = {
 
       this.targetCalendarYear = y;
       this.targetCalendarMonth = m;
+      this.$nextTick(() => this._attachCloseAttributes());
     },
 
     // === HIGHLIGHT TANGGAL TERPILIH ===
-    // Versi sederhana: cocokkan hanya angka hari (07 → 7)
     isBirthSelected(cell) {
       if (!cell) return false;
       if (!this.birthDay) return false;
@@ -384,6 +555,7 @@ window.AgeCalculator = {
       this.birthMonth = String(cell.month);
       this.birthYear = String(cell.year);
       this.showBirthCalendar = false;
+      this.$nextTick(() => this._attachCloseAttributes());
     },
 
     pickTargetFromCalendar(cell) {
@@ -392,6 +564,7 @@ window.AgeCalculator = {
       this.targetMonth = String(cell.month);
       this.targetYear = String(cell.year);
       this.showTargetCalendar = false;
+      this.$nextTick(() => this._attachCloseAttributes());
     },
 
     // === HITUNG UMUR ===

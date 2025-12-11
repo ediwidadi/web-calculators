@@ -70,7 +70,7 @@
                   class="absolute z-20 mt-1 w-full max-h-48 overflow-auto bg-white border border-slate-200 rounded shadow text-sm"
                 >
                   <button
-                    v-for="d in dayOptions"
+                  v-for="d in birthDayOptions"
                     :key="'bd-' + d"
                     type="button"
                     @click.stop="selectBirthDay(d)"
@@ -202,7 +202,7 @@
                   class="absolute z-20 mt-1 w-full max-h-48 overflow-auto bg-white border border-slate-200 rounded shadow text-sm"
                 >
                   <button
-                    v-for="d in dayOptions"
+                   v-for="d in targetDayOptions"
                     :key="'td-' + d"
                     type="button"
                     @click.stop="selectTargetDay(d)"
