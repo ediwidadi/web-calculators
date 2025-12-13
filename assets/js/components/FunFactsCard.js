@@ -1,10 +1,7 @@
-
 // assets/js/components/FunFactsCard.js
 
 window.FunFactsCard = {
   props: ['result', 'funFacts', 'birthDate'],
-
-  // gunakan template dari index.html
   template: '#fun-facts-card-template',
 
   data() {
@@ -19,7 +16,7 @@ window.FunFactsCard = {
       timerId: null,
       lang: APP_CONFIG.LANG,
       showBirthdayPopup: false,
-      popupClosing: false, // untuk animasi keluar
+      popupClosing: false,
       _confettiAnimationFrame: null,
       _confettiResizeHandler: null
     };
@@ -30,60 +27,16 @@ window.FunFactsCard = {
       return this.lang === 'id';
     },
 
-    // FUN FACTS dihitung di sini
-    funFactsComputed() {
-      if (!this.result) {
-        return {
-          breaths: 0,
-          heartBeats: 0,
-          laughs: 0,
-          sleepYears: 0,
-          hairLengthMeters: 0,
-          nailLengthMeters: 0
-        };
-      }
-
-      const totalDays = this.result.totalDays || 0;
-      const ageYears = this.result.years || 0;
-      const totalMonthsApprox =
-        typeof this.result.totalMonthsApprox === 'number'
-          ? this.result.totalMonthsApprox
-          : ageYears * 12;
-
-      // 1. Nafas (15.8 kali / menit)
-      const breathsPerMinute = 15.8;
-      const breathsPerDay = breathsPerMinute * 60 * 24;
-      const breaths = Math.round(totalDays * breathsPerDay);
-
-      // 2. Detak jantung (70 bpm)
-      const heartBeatsPerMinute = 70;
-      const heartBeatsPerDay = heartBeatsPerMinute * 60 * 24;
-      const heartBeats = Math.round(totalDays * heartBeatsPerDay);
-
-      // 3. Tertawa (17 kali / hari)
-      const laughsPerDay = 17;
-      const laughs = Math.round(totalDays * laughsPerDay);
-
-      // 4. Waktu tidur (8 jam / hari)
-      const sleepHoursPerDay = 8;
-      const totalSleepHours = totalDays * sleepHoursPerDay;
-      const sleepYears = totalSleepHours / 24 / 365.25;
-
-      // 5. Panjang rambut (1 cm / bulan)
-      const hairGrowthCmPerMonth = 1.0;
-      const hairLengthMeters = (totalMonthsApprox * hairGrowthCmPerMonth) / 100;
-
-      // 6. Panjang kuku (0.1 mm / hari)
-      const nailGrowthMmPerDay = 0.1;
-      const nailLengthMeters = (totalDays * nailGrowthMmPerDay) / 1000;
-
+    // 🔒 SELALU OBJECT VALID (tidak pernah undefined)
+    facts() {
+      const f = this.funFacts || {};
       return {
-        breaths,
-        heartBeats,
-        laughs,
-        sleepYears,
-        hairLengthMeters,
-        nailLengthMeters
+        breaths: Number(f.breaths) || 0,
+        heartBeats: Number(f.heartBeats) || 0,
+        laughs: Number(f.laughs) || 0,
+        sleepYears: Number(f.sleepYears) || 0,
+        hairLengthMeters: Number(f.hairLengthMeters) || 0,
+        nailLengthMeters: Number(f.nailLengthMeters) || 0
       };
     }
   },
@@ -97,9 +50,7 @@ window.FunFactsCard = {
   },
 
   beforeUnmount() {
-    if (this.timerId) {
-      clearInterval(this.timerId);
-    }
+    if (this.timerId) clearInterval(this.timerId);
     this.stopConfetti();
     window.removeEventListener('app-language-changed', this.onLangChanged);
     window.removeEventListener('language-changed', this.onLangChanged);
@@ -118,22 +69,12 @@ window.FunFactsCard = {
       return APP_CONFIG.t(key);
     },
 
-    // ===== POPUP & CONFETTI =====
+    // ===== BIRTHDAY POPUP =====
     checkBirthdayToday() {
-      if (!this.birthDate) {
-        this.showBirthdayPopup = false;
-        this.popupClosing = false;
-        this.stopConfetti();
-        return;
-      }
+      if (!this.birthDate) return this.closeBirthdayPopup(true);
 
       const b = new Date(this.birthDate);
-      if (isNaN(b)) {
-        this.showBirthdayPopup = false;
-        this.popupClosing = false;
-        this.stopConfetti();
-        return;
-      }
+      if (isNaN(b)) return this.closeBirthdayPopup(true);
 
       const now = new Date();
       const isBirthday =
@@ -143,22 +84,23 @@ window.FunFactsCard = {
       if (isBirthday) {
         this.popupClosing = false;
         this.showBirthdayPopup = true;
-        this.$nextTick(() => {
-          this.startConfetti();
-        });
+        this.$nextTick(() => this.startConfetti());
       } else {
-        this.showBirthdayPopup = false;
-        this.popupClosing = false;
-        this.stopConfetti();
+        this.closeBirthdayPopup(true);
       }
     },
 
-    closeBirthdayPopup() {
-      if (this.popupClosing) return;
+    closeBirthdayPopup(force = false) {
+      if (force) {
+        this.showBirthdayPopup = false;
+        this.popupClosing = false;
+        this.stopConfetti();
+        return;
+      }
 
+      if (this.popupClosing) return;
       this.popupClosing = true;
       this.stopConfetti();
-
       setTimeout(() => {
         this.showBirthdayPopup = false;
         this.popupClosing = false;
@@ -168,7 +110,6 @@ window.FunFactsCard = {
     startConfetti() {
       const canvas = this.$refs.confettiCanvas;
       if (!canvas) return;
-
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
@@ -181,36 +122,28 @@ window.FunFactsCard = {
       this._confettiResizeHandler = resize;
 
       const colors = ['#f43f5e', '#f97316', '#22c55e', '#3b82f6', '#a855f7'];
-      const confettiCount = 140;
-      const pieces = [];
-
-      for (let i = 0; i < confettiCount; i++) {
-        pieces.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height - canvas.height,
-          w: Math.random() * 8 + 4,
-          h: Math.random() * 8 + 4,
-          dy: Math.random() * 2 + 1.5,
-          dx: Math.random() * 1 - 0.5,
-          tilt: Math.random() * 2 * Math.PI,
-          dTilt: Math.random() * 0.05 + 0.02,
-          color: colors[Math.floor(Math.random() * colors.length)]
-        });
-      }
+      const pieces = Array.from({ length: 140 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height - canvas.height,
+        w: Math.random() * 8 + 4,
+        h: Math.random() * 8 + 4,
+        dy: Math.random() * 2 + 1.5,
+        dx: Math.random() * 1 - 0.5,
+        tilt: Math.random() * Math.PI * 2,
+        dTilt: Math.random() * 0.05 + 0.02,
+        color: colors[Math.floor(Math.random() * colors.length)]
+      }));
 
       const draw = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
         pieces.forEach(p => {
           p.y += p.dy;
           p.x += p.dx;
           p.tilt += p.dTilt;
-
           if (p.y > canvas.height) {
             p.y = -10;
             p.x = Math.random() * canvas.width;
           }
-
           ctx.save();
           ctx.translate(p.x, p.y);
           ctx.rotate(p.tilt);
@@ -218,7 +151,6 @@ window.FunFactsCard = {
           ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
           ctx.restore();
         });
-
         this._confettiAnimationFrame = requestAnimationFrame(draw);
       };
 
@@ -230,48 +162,28 @@ window.FunFactsCard = {
         cancelAnimationFrame(this._confettiAnimationFrame);
         this._confettiAnimationFrame = null;
       }
-
-      const canvas = this.$refs.confettiCanvas;
-      if (canvas) {
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-      }
-
       if (this._confettiResizeHandler) {
         window.removeEventListener('resize', this._confettiResizeHandler);
         this._confettiResizeHandler = null;
       }
     },
 
-    // ===== GROWING TIMELINE (REAL TIME) =====
+    // ===== LIVE TIMELINE =====
     startLiveTimeline() {
-      if (this.timerId) {
-        clearInterval(this.timerId);
-        this.timerId = null;
-      }
+      if (this.timerId) clearInterval(this.timerId);
       if (!this.birthDate) return;
 
       const birth = new Date(this.birthDate);
       if (isNaN(birth)) return;
 
       const update = () => {
-        const now = new Date();
-        const diffMs = now - birth;
-        if (diffMs < 0) return;
-
-        const totalSeconds = Math.floor(diffMs / 1000);
-        const totalMinutes = Math.floor(totalSeconds / 60);
-        const totalHours = Math.floor(totalMinutes / 60);
-        const totalDays = Math.floor(totalHours / 24);
-
-        this.liveTimeline = {
-          days: totalDays,
-          hours: totalHours,
-          minutes: totalMinutes,
-          seconds: totalSeconds
-        };
+        const diff = Date.now() - birth.getTime();
+        if (diff < 0) return;
+        const s = Math.floor(diff / 1000);
+        const m = Math.floor(s / 60);
+        const h = Math.floor(m / 60);
+        const d = Math.floor(h / 24);
+        this.liveTimeline = { days: d, hours: h, minutes: m, seconds: s };
       };
 
       update();
@@ -294,65 +206,55 @@ window.FunFactsCard = {
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-      let year = today.getFullYear();
-      const month = birth.getMonth();
-      const day = birth.getDate();
-
-      let next = new Date(year, month, day);
+      let next = new Date(today.getFullYear(), birth.getMonth(), birth.getDate());
       if (next <= today) {
-        next = new Date(year + 1, month, day);
+        next = new Date(today.getFullYear() + 1, birth.getMonth(), birth.getDate());
       }
 
-      const MS_PER_DAY = 1000 * 60 * 60 * 24;
-      const todayUTC = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
-      const nextUTC = Date.UTC(next.getFullYear(), next.getMonth(), next.getDate());
-      const daysLeft = Math.max(0, Math.round((nextUTC - todayUTC) / MS_PER_DAY));
-
-      const hoursLeft = daysLeft * 24;
-      const minutesLeft = hoursLeft * 60;
-      const secondsLeft = minutesLeft * 60;
+      const MS = 86400000;
+      const daysLeft = Math.round(
+        (Date.UTC(next.getFullYear(), next.getMonth(), next.getDate()) -
+          Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())) / MS
+      );
 
       let monthsLeft =
         (next.getFullYear() - today.getFullYear()) * 12 +
         (next.getMonth() - today.getMonth());
-      let daysPart = next.getDate() - today.getDate();
 
+      let daysPart = next.getDate() - today.getDate();
       if (daysPart < 0) {
         monthsLeft -= 1;
-        const prevMonth = new Date(next.getFullYear(), next.getMonth(), 0);
-        daysPart += prevMonth.getDate();
+        daysPart += new Date(next.getFullYear(), next.getMonth(), 0).getDate();
       }
 
       this.nextBirthday = {
         date: next,
         monthsLeft,
-        daysLeft,
         daysPart,
-        hoursLeft,
-        minutesLeft,
-        secondsLeft
+        daysLeft,
+        hoursLeft: daysLeft * 24,
+        minutesLeft: daysLeft * 24 * 60,
+        secondsLeft: daysLeft * 24 * 60 * 60
       };
     },
 
-    // ===== FORMAT & BAHASA =====
-    formatInteger(value) {
-      if (typeof value !== 'number') return value;
-      return value.toLocaleString(APP_CONFIG.LOCALE);
+    formatInteger(v) {
+      return typeof v === 'number' ? v.toLocaleString(APP_CONFIG.LOCALE) : v;
     },
 
-    formatDecimal(value, fractionDigits = 1) {
-      if (typeof value !== 'number') return value;
-      return value.toLocaleString(APP_CONFIG.LOCALE, {
-        minimumFractionDigits: fractionDigits,
-        maximumFractionDigits: fractionDigits
-      });
+    formatDecimal(v, d = 1) {
+      return typeof v === 'number'
+        ? v.toLocaleString(APP_CONFIG.LOCALE, {
+            minimumFractionDigits: d,
+            maximumFractionDigits: d
+          })
+        : v;
     },
 
-    formatFullDate(value) {
-      const date = value instanceof Date ? value : new Date(value);
-      if (isNaN(date)) return '-';
-
-      return date.toLocaleDateString(APP_CONFIG.LOCALE, {
+    formatFullDate(v) {
+      const d = v instanceof Date ? v : new Date(v);
+      if (isNaN(d)) return '-';
+      return d.toLocaleDateString(APP_CONFIG.LOCALE, {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
