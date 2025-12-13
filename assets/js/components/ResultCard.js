@@ -36,7 +36,7 @@ window.ResultCard = {
     <div class="mt-6 bg-white rounded-xl shadow p-6">
     
       <!-- JUDUL UTAMA -->
-      <h3 class="font-semibold text-lg mb-2 text-brand">
+      <h3 class="font-semibold text-lg mb-2 text-lime-600">
         {{ t('ageResultTitle') }}
       </h3>
 
@@ -48,15 +48,15 @@ window.ResultCard = {
       <!-- HASIL UMUR -->
       <div class="grid grid-cols-3 gap-4 text-center">
         <div class="p-3 bg-slate-50 rounded">
-          <div class="text-2xl font-bold text-brand">{{ result.years }}</div>
+          <div class="text-2xl font-bold text-lime-600">{{ result.years }}</div>
           <div class="text-sm">{{ t('yearsLabel') }}</div>
         </div>
         <div class="p-3 bg-slate-50 rounded">
-          <div class="text-2xl font-bold text-brand">{{ result.months }}</div>
+          <div class="text-2xl font-bold text-lime-600">{{ result.months }}</div>
           <div class="text-sm">{{ t('monthsApproxLabel') }}</div>
         </div>
         <div class="p-3 bg-slate-50 rounded">
-          <div class="text-2xl font-bold text-brand">{{ result.days }}</div>
+          <div class="text-2xl font-bold text-lime-600">{{ result.days }}</div>
           <div class="text-sm">{{ t('daysLabel') }}</div>
         </div>
       </div>
@@ -69,16 +69,16 @@ window.ResultCard = {
 
         <!-- TANGGAL LAHIR -->
         <div v-if="birthParts" class="flex flex-wrap gap-2 justify-center">
-          <div class="px-3 py-2 bg-slate-50 rounded font-semibold text-brand">
+          <div class="px-3 py-2 bg-slate-50 rounded font-semibold text-lime-600">
             {{ birthParts.weekday }}
           </div>
-          <div class="px-3 py-2 bg-slate-50 rounded font-semibold text-brand">
+          <div class="px-3 py-2 bg-slate-50 rounded font-semibold text-lime-600">
             {{ birthParts.day }}
           </div>
-          <div class="px-3 py-2 bg-slate-50 rounded font-semibold text-brand">
+          <div class="px-3 py-2 bg-slate-50 rounded font-semibold text-lime-600">
             {{ birthParts.month }}
           </div>
-          <div class="px-3 py-2 bg-slate-50 rounded font-semibold text-brand">
+          <div class="px-3 py-2 bg-slate-50 rounded font-semibold text-lime-600">
             {{ birthParts.year }}
           </div>
         </div>

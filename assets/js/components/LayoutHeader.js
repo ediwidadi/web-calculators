@@ -65,7 +65,7 @@ window.LayoutHeader = {
     window.removeEventListener('app-language-changed', this.onLangChanged);
   },
   template: `
-    <header class="w-full bg-brand text-white shadow-md sticky top-0 z-40">
+    <header class="w-full bg-lime-600 text-white shadow-md sticky top-0 z-40">
       <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
         
         <!-- LEFT: LOGO + TITLE -->
@@ -98,12 +98,12 @@ window.LayoutHeader = {
             <button
               type="button"
               @click="setLang('id')"
-              :class="['px-2 py-1 rounded-full transition', isID ? 'bg-white text-brand shadow-sm' : 'text-white/80 hover:text-white']"
+              :class="['px-2 py-1 rounded-full transition', isID ? 'bg-white text-lime-600 shadow-sm' : 'text-white/80 hover:text-white']"
             >ID</button>
             <button
               type="button"
               @click="setLang('en')"
-              :class="['px-2 py-1 rounded-full transition', !isID ? 'bg-white text-brand shadow-sm' : 'text-white/80 hover:text-white']"
+              :class="['px-2 py-1 rounded-full transition', !isID ? 'bg-white text-lime-600 shadow-sm' : 'text-white/80 hover:text-white']"
             >EN</button>
           </div>
         </div>
