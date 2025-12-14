@@ -668,36 +668,39 @@ calculate() {
   // SIMULASI PROSES
   this._finishTimer = setTimeout(() => {
     try {
-      const birthDate = new Date(
-        Number(this.birthYear),
-        Number(this.birthMonth) - 1,
-        Number(this.birthDay)
-      );
+   const birthDate = new Date(
+  Number(this.birthYear),
+  Number(this.birthMonth) - 1,
+  Number(this.birthDay)
+);
 
-      const targetDate = new Date(
-        Number(this.targetYear),
-        Number(this.targetMonth) - 1,
-        Number(this.targetDay)
-      );
+this.birthDateObj = birthDate;
 
-      // 🔑 INI KUNCI MASALAHMU (WAJIB ADA)
-      const birthDateISO =
-        `${this.birthYear}-` +
-        `${this.formatTwoDigits(this.birthMonth)}-` +
-        `${this.formatTwoDigits(this.birthDay)}`;
+const targetDate = new Date(
+  Number(this.targetYear),
+  Number(this.targetMonth) - 1,
+  Number(this.targetDay)
+);
 
-      const ageResult = DateUtils.calculateAge(birthDate, targetDate);
+// 🔑 WAJIB — INI KUNCI SEMUANYA
 
-      // 🔑 RESULT FINAL (LENGKAP)
-      this.result = {
-        ...ageResult,
-        birthDateISO
-      };
 
-      this.funFacts = DateUtils.calculateFunFacts(this.result);
-      this.hasCalculated = true;
+const birthDateISO =
+  `${this.birthYear}-` +
+  `${this.formatTwoDigits(this.birthMonth)}-` +
+  `${this.formatTwoDigits(this.birthDay)}`;
 
-      APP_CONFIG.toast(this.t('toastDone'), 'success');
+const ageResult = DateUtils.calculateAge(birthDate, targetDate);
+
+this.result = {
+  ...ageResult,
+  birthDateISO
+};
+
+this.funFacts = DateUtils.calculateFunFacts(this.result);
+this.hasCalculated = true;
+
+APP_CONFIG.toast(this.t('toastDone'), 'success');
 
     } catch (err) {
       this.error = err.message || this.t('errorGeneric');
