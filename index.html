@@ -25,29 +25,69 @@
   <!-- HOME TEMPLATE -->
   <!-- ===================== -->
 <template id="HomePage">
-  <main class="flex-1 flex items-center justify-center px-4">
-    <div class="max-w-xl w-full bg-white rounded-xl shadow p-6 sm:p-8 space-y-4">
+  <main class="flex-1 px-4 flex justify-center pt-10">
+    <div class="max-w-xl w-full space-y-4">
 
-      <h2 class="text-xl font-semibold text-center text-lime-600">
+      <!-- JUDUL -->
+      <h2 class="text-[34px] font-semibold text-center text-lime-600">
         {{ t('appName') }}
       </h2>
-
-      <p class="text-sm text-slate-600 text-center">
+      <p class="text-[16px] text-slate-600 text-center mb-5">
         {{ t('homeIntro') }}
       </p>
 
-      <a href="pages/age-calculator.html"
-         class="block w-full text-center bg-lime-600 text-white py-2 rounded-lg font-semibold">
-        {{ t('ageCalculator') }}
-      </a>
+      <!-- KALKULATOR UMUR -->
+<a
+  href="pages/age-calculator.html"
+  class="
+    block
+    bg-white
+    rounded-xl
+    shadow
+    p-5
+    border border-transparent
+    transition
+    hover:shadow-md
+    hover:border-lime-300
+    hover:ring-1
+    hover:ring-lime-300
+    focus:outline-none
+    focus:border-lime-300
+    focus:ring-2
+    focus:ring-lime-300
+    active:border-lime-300
+  "
+>
+  <h3 class="text-[22px] font-semibold text-lime-600 mb-1">
+    {{ t('ageCalculator') }}
+  </h3>
+  <p class="text-[14px] text-slate-600">
+    {{ t('ageCalculatorDesc') }}
+  </p>
+</a>
+      <!-- KALKULATOR WAKTU -->
+      <div
+        class="block bg-white rounded-xl shadow p-5 opacity-70"
+      >
+        <h3 class="text-[22px] font-semibold text-slate-700 mb-1">
+          {{ t('timeCalculator') }}
+        </h3>
+        <p class="text-[14px] text-slate-600">
+          {{ t('timeCalculatorDesc') }}
+        </p>
+      </div>
 
-      <a class="block w-full text-center bg-slate-200 py-2 rounded-lg">
-        {{ t('timeCalculator') }}
-      </a>
-
-      <a class="block w-full text-center bg-slate-200 py-2 rounded-lg">
-        {{ t('loveCalculator') }}
-      </a>
+      <!-- KALKULATOR CINTA -->
+      <div
+        class="block bg-white rounded-xl shadow p-5 opacity-70"
+      >
+        <h3 class="text-[22px] font-semibold text-slate-700 mb-1">
+          {{ t('loveCalculator') }}
+        </h3>
+        <p class="text-[14px] text-slate-600">
+          {{ t('loveCalculatorDesc') }}
+        </p>
+      </div>
 
     </div>
   </main>

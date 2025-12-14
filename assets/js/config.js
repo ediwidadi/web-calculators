@@ -50,16 +50,49 @@
   // set lang attribute sejak awal
   document.documentElement.lang = currentLang;
 
+function showToast(message, type = 'info', duration = 2500) {
+  let toast = document.createElement('div');
+  toast.className = `
+    fixed top-4 left-1/2 -translate-x-1/2 z-50
+    px-4 py-2 rounded-lg text-sm font-medium shadow
+    transition-all duration-300 opacity-0 translate-y-2
+  `;
+
+  if (type === 'error') {
+    toast.classList.add('bg-red-600', 'text-white');
+  } else if (type === 'success') {
+    toast.classList.add('bg-lime-600', 'text-white');
+  } else {
+    toast.classList.add('bg-slate-800', 'text-white');
+  }
+
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  requestAnimationFrame(() => {
+    toast.classList.remove('opacity-0', 'translate-y-2');
+  });
+
+  setTimeout(() => {
+    toast.classList.add('opacity-0', 'translate-y-2');
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
+
+
+
+
   window.APP_CONFIG = {
-    get LANG() {
-      return currentLang;
-    },
-    get LOCALE() {
-      return currentLang === 'id' ? 'id-ID' : 'en-US';
-    },
-    t,
-    setLang,
-    registerTranslations
-  };
+  get LANG() {
+    return currentLang;
+  },
+  get LOCALE() {
+    return currentLang === 'id' ? 'id-ID' : 'en-US';
+  },
+  t,
+  setLang,
+  registerTranslations,
+  toast: showToast   // ⬅️ INI
+};
 
 })();

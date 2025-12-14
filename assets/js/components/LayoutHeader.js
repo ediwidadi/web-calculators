@@ -74,7 +74,7 @@ window.LayoutHeader = {
             <span>A</span>
           </div>
           <h1 class="text-base sm:text-lg font-semibold tracking-tight select-none">
-            Kalkulator Umur
+            KALKULATOR-ONLINE
           </h1>
         </div>
 

@@ -1,3 +1,42 @@
+@layer base {
+  html {
+    font-size: 16px;
+  }
+
+  body {
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  a {
+    font-size: 5rem;
+    line-height: 1.4;
+  }
+
+  p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  h1 {
+    font-size: 1.25rem;
+  }
+
+  h2 {
+    font-size: 1.15rem;
+  }
+
+  h3 {
+    font-size: 1.05rem;
+  }
+
+  button {
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+}
+
+
 html {
   scroll-behavior: smooth;
 }
@@ -5,6 +44,8 @@ html {
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }
+
+
 
 /* Animasi card popup ulang tahun - efek berdenyut (pulse) */
 .birthday-pulse-enter-active .popup-card,
