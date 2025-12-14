@@ -2,10 +2,10 @@
 
 window.AgeCalculator = {
   components: {
-    ResultCard: window.ResultCard,
-    FunFactsCard: window.FunFactsCard
-  },
-  
+  ResultCard: window.ResultCard,
+  FunFactsCard: window.FunFactsCard,
+  BirthDateCard: window.BirthDateCard
+},
   // Gunakan template dari index.html
   template: '#age-calculator-template',
   
@@ -221,30 +221,78 @@ window.AgeCalculator = {
   },
   
   watch: {
-    targetDay() { this.persistTargetDate(); },
-    targetMonth() { this.persistTargetDate(); },
-    targetYear() { this.persistTargetDate(); },
-    
-    // also re-attach attributes when panels open/close to ensure dynamic nodes are marked
-    isBirthDayOpen() { this.$nextTick(() => this._attachCloseAttributes()); },
-    isBirthMonthOpen() { this.$nextTick(() => this._attachCloseAttributes()); },
-    isBirthYearOpen() { this.$nextTick(() => this._attachCloseAttributes()); },
-    isTargetDayOpen() { this.$nextTick(() => this._attachCloseAttributes()); },
-    isTargetMonthOpen() { this.$nextTick(() => this._attachCloseAttributes()); },
-    isTargetYearOpen() { this.$nextTick(() => this._attachCloseAttributes()); },
-    showBirthCalendar() { this.$nextTick(() => this._attachCloseAttributes()); },
-    showTargetCalendar() { this.$nextTick(() => this._attachCloseAttributes()); },
-    
-    birthDay() { this.hasCalculated = false; },
-    birthMonth() { this.hasCalculated = false; },
-    birthYear() { this.hasCalculated = false; },
-    
-    targetDay() { this.hasCalculated = false; },
-    targetMonth() { this.hasCalculated = false; },
-    targetYear() { this.hasCalculated = false; }
-    
-    
+birthDateObj: {
+immediate: true,
+handler() {
+if (!this.birthDateObj) return;
+
+this.startLiveTimeline();  
+  this.computeNextBirthday();  
+  this.checkBirthdayToday();  
+}
+
+},
+
+  // =====================================================
+  // TARGET DATE
+  // 👉 simpan ke session + reset hasil
+  // =====================================================
+  targetDay() {
+    this.persistTargetDate();
+    this.hasCalculated = false;
   },
+  targetMonth() {
+    this.persistTargetDate();
+    this.hasCalculated = false;
+  },
+  targetYear() {
+    this.persistTargetDate();
+    this.hasCalculated = false;
+  },
+
+  // =====================================================
+  // BIRTH INPUT
+  // 👉 reset hasil jika user ubah tanggal lahir
+  // =====================================================
+  birthDay() {
+    this.hasCalculated = false;
+  },
+  birthMonth() {
+    this.hasCalculated = false;
+  },
+  birthYear() {
+    this.hasCalculated = false;
+  },
+
+  // =====================================================
+  // DROPDOWN & CALENDAR
+  // 👉 pastikan click-outside & close logic aman
+  // =====================================================
+  isBirthDayOpen() {
+    this.$nextTick(this._attachCloseAttributes);
+  },
+  isBirthMonthOpen() {
+    this.$nextTick(this._attachCloseAttributes);
+  },
+  isBirthYearOpen() {
+    this.$nextTick(this._attachCloseAttributes);
+  },
+  isTargetDayOpen() {
+    this.$nextTick(this._attachCloseAttributes);
+  },
+  isTargetMonthOpen() {
+    this.$nextTick(this._attachCloseAttributes);
+  },
+  isTargetYearOpen() {
+    this.$nextTick(this._attachCloseAttributes);
+  },
+  showBirthCalendar() {
+    this.$nextTick(this._attachCloseAttributes);
+  },
+  showTargetCalendar() {
+    this.$nextTick(this._attachCloseAttributes);
+  }
+},
   
   methods: {
     t(key) {
@@ -586,42 +634,38 @@ window.AgeCalculator = {
 calculate() {
   if (this.loading) return;
 
+  // RESET STATE
   this.error = null;
+  this.result = null;
+  this.funFacts = null;
+  this.hasCalculated = false;
 
-  // =========================
-  // 1️⃣ VALIDASI DI AWAL
-  // =========================
+  // VALIDASI CEPAT (SEBELUM LOADING)
   if (!this.birthDay || !this.birthMonth || !this.birthYear) {
-    APP_CONFIG.toast(this.t('toastIncomplete'), 'error');
     this.error = this.t('errorBirthIncomplete');
+    APP_CONFIG.toast(this.t('toastIncomplete'), 'error');
     return;
   }
 
   if (!this.targetDay || !this.targetMonth || !this.targetYear) {
-    APP_CONFIG.toast(this.t('toastIncomplete'), 'error');
     this.error = this.t('errorTargetIncomplete');
+    APP_CONFIG.toast(this.t('toastIncomplete'), 'error');
     return;
   }
 
-  // =========================
-  // 2️⃣ BARU BOLEH LOADING
-  // =========================
+  // START LOADING
   this.loading = true;
   this.progress = 0;
   APP_CONFIG.toast(this.t('toastCalculating'));
 
-  // =========================
-  // 3️⃣ PROGRESS RANDOM
-  // =========================
+  // RANDOM PROGRESS (NATURAL)
   this._progressTimer = setInterval(() => {
     if (this.progress >= 95) return;
-    const step = Math.floor(Math.random() * 4) + 1;
+    const step = Math.floor(Math.random() * 4) + 1; // 1–4
     this.progress = Math.min(this.progress + step, 95);
   }, 120);
 
-  // =========================
-  // 4️⃣ SIMULASI PROSES
-  // =========================
+  // SIMULASI PROSES
   this._finishTimer = setTimeout(() => {
     try {
       const birthDate = new Date(
@@ -636,9 +680,20 @@ calculate() {
         Number(this.targetDay)
       );
 
-      this.birthDateObj = birthDate;
+      // 🔑 INI KUNCI MASALAHMU (WAJIB ADA)
+      const birthDateISO =
+        `${this.birthYear}-` +
+        `${this.formatTwoDigits(this.birthMonth)}-` +
+        `${this.formatTwoDigits(this.birthDay)}`;
 
-      this.result = DateUtils.calculateAge(birthDate, targetDate);
+      const ageResult = DateUtils.calculateAge(birthDate, targetDate);
+
+      // 🔑 RESULT FINAL (LENGKAP)
+      this.result = {
+        ...ageResult,
+        birthDateISO
+      };
+
       this.funFacts = DateUtils.calculateFunFacts(this.result);
       this.hasCalculated = true;
 
@@ -648,9 +703,7 @@ calculate() {
       this.error = err.message || this.t('errorGeneric');
     }
 
-    // =========================
-    // 5️⃣ FINISH HALUS
-    // =========================
+    // FINISH PROGRESS
     this.progress = 100;
 
     setTimeout(() => {

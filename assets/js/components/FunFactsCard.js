@@ -1,7 +1,12 @@
 // assets/js/components/FunFactsCard.js
 
 window.FunFactsCard = {
-  props: ['result', 'funFacts', 'birthDate'],
+  props: {
+    result: Object,
+    funFacts: Object,
+    birthDateObj: [Date, String]
+  },
+
   template: '#fun-facts-card-template',
 
   data() {
@@ -12,7 +17,6 @@ window.FunFactsCard = {
         minutes: 0,
         seconds: 0
       },
-      nextBirthday: null,
       timerId: null,
       lang: APP_CONFIG.LANG,
       showBirthdayPopup: false,
@@ -27,7 +31,7 @@ window.FunFactsCard = {
       return this.lang === 'id';
     },
 
-    // 🔒 SELALU OBJECT VALID (tidak pernah undefined)
+    // ===== SAFE FUN FACTS =====
     facts() {
       const f = this.funFacts || {};
       return {
@@ -38,28 +42,83 @@ window.FunFactsCard = {
         hairLengthMeters: Number(f.hairLengthMeters) || 0,
         nailLengthMeters: Number(f.nailLengthMeters) || 0
       };
+    },
+
+    // ===== NEXT BIRTHDAY (KUNCI UTAMA) =====
+    nextBirthday() {
+      if (!this.birthDateObj) return null;
+
+      const birth = new Date(this.birthDateObj);
+      if (isNaN(birth)) return null;
+
+      const now = new Date();
+      const today = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate()
+      );
+
+      let next = new Date(
+        today.getFullYear(),
+        birth.getMonth(),
+        birth.getDate()
+      );
+
+      if (next <= today) {
+        next = new Date(
+          today.getFullYear() + 1,
+          birth.getMonth(),
+          birth.getDate()
+        );
+      }
+
+      const MS = 86400000;
+      const daysLeft = Math.round(
+        (Date.UTC(next.getFullYear(), next.getMonth(), next.getDate()) -
+         Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())) / MS
+      );
+
+      let monthsLeft =
+        (next.getFullYear() - today.getFullYear()) * 12 +
+        (next.getMonth() - today.getMonth());
+
+      let daysPart = next.getDate() - today.getDate();
+      if (daysPart < 0) {
+        monthsLeft -= 1;
+        daysPart += new Date(
+          next.getFullYear(),
+          next.getMonth(),
+          0
+        ).getDate();
+      }
+
+      return {
+        date: next,
+        monthsLeft,
+        daysPart,
+        daysLeft,
+        hoursLeft: daysLeft * 24,
+        minutesLeft: daysLeft * 24 * 60,
+        secondsLeft: daysLeft * 24 * 60 * 60
+      };
     }
   },
 
   mounted() {
     this.startLiveTimeline();
-    this.computeNextBirthday();
     this.checkBirthdayToday();
     window.addEventListener('app-language-changed', this.onLangChanged);
-    window.addEventListener('language-changed', this.onLangChanged);
   },
 
   beforeUnmount() {
     if (this.timerId) clearInterval(this.timerId);
     this.stopConfetti();
     window.removeEventListener('app-language-changed', this.onLangChanged);
-    window.removeEventListener('language-changed', this.onLangChanged);
   },
 
   watch: {
-    birthDate() {
+    birthDateObj() {
       this.startLiveTimeline();
-      this.computeNextBirthday();
       this.checkBirthdayToday();
     }
   },
@@ -69,11 +128,40 @@ window.FunFactsCard = {
       return APP_CONFIG.t(key);
     },
 
+    // ===== LIVE TIMELINE =====
+    startLiveTimeline() {
+      if (this.timerId) clearInterval(this.timerId);
+      if (!this.birthDateObj) return;
+
+      const birth = new Date(this.birthDateObj);
+      if (isNaN(birth)) return;
+
+      const update = () => {
+        const diff = Date.now() - birth.getTime();
+        if (diff < 0) return;
+
+        const s = Math.floor(diff / 1000);
+        const m = Math.floor(s / 60);
+        const h = Math.floor(m / 60);
+        const d = Math.floor(h / 24);
+
+        this.liveTimeline = {
+          days: d,
+          hours: h,
+          minutes: m,
+          seconds: s
+        };
+      };
+
+      update();
+      this.timerId = setInterval(update, 1000);
+    },
+
     // ===== BIRTHDAY POPUP =====
     checkBirthdayToday() {
-      if (!this.birthDate) return this.closeBirthdayPopup(true);
+      if (!this.birthDateObj) return this.closeBirthdayPopup(true);
 
-      const b = new Date(this.birthDate);
+      const b = new Date(this.birthDateObj);
       if (isNaN(b)) return this.closeBirthdayPopup(true);
 
       const now = new Date();
@@ -101,6 +189,7 @@ window.FunFactsCard = {
       if (this.popupClosing) return;
       this.popupClosing = true;
       this.stopConfetti();
+
       setTimeout(() => {
         this.showBirthdayPopup = false;
         this.popupClosing = false;
@@ -110,6 +199,7 @@ window.FunFactsCard = {
     startConfetti() {
       const canvas = this.$refs.confettiCanvas;
       if (!canvas) return;
+
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
@@ -117,6 +207,7 @@ window.FunFactsCard = {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
       };
+
       resize();
       window.addEventListener('resize', resize);
       this._confettiResizeHandler = resize;
@@ -136,14 +227,17 @@ window.FunFactsCard = {
 
       const draw = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+
         pieces.forEach(p => {
           p.y += p.dy;
           p.x += p.dx;
           p.tilt += p.dTilt;
+
           if (p.y > canvas.height) {
             p.y = -10;
             p.x = Math.random() * canvas.width;
           }
+
           ctx.save();
           ctx.translate(p.x, p.y);
           ctx.rotate(p.tilt);
@@ -151,6 +245,7 @@ window.FunFactsCard = {
           ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
           ctx.restore();
         });
+
         this._confettiAnimationFrame = requestAnimationFrame(draw);
       };
 
@@ -168,78 +263,10 @@ window.FunFactsCard = {
       }
     },
 
-    // ===== LIVE TIMELINE =====
-    startLiveTimeline() {
-      if (this.timerId) clearInterval(this.timerId);
-      if (!this.birthDate) return;
-
-      const birth = new Date(this.birthDate);
-      if (isNaN(birth)) return;
-
-      const update = () => {
-        const diff = Date.now() - birth.getTime();
-        if (diff < 0) return;
-        const s = Math.floor(diff / 1000);
-        const m = Math.floor(s / 60);
-        const h = Math.floor(m / 60);
-        const d = Math.floor(h / 24);
-        this.liveTimeline = { days: d, hours: h, minutes: m, seconds: s };
-      };
-
-      update();
-      this.timerId = setInterval(update, 1000);
-    },
-
-    // ===== NEXT BIRTHDAY =====
-    computeNextBirthday() {
-      if (!this.birthDate) {
-        this.nextBirthday = null;
-        return;
-      }
-
-      const birth = new Date(this.birthDate);
-      if (isNaN(birth)) {
-        this.nextBirthday = null;
-        return;
-      }
-
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-      let next = new Date(today.getFullYear(), birth.getMonth(), birth.getDate());
-      if (next <= today) {
-        next = new Date(today.getFullYear() + 1, birth.getMonth(), birth.getDate());
-      }
-
-      const MS = 86400000;
-      const daysLeft = Math.round(
-        (Date.UTC(next.getFullYear(), next.getMonth(), next.getDate()) -
-          Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())) / MS
-      );
-
-      let monthsLeft =
-        (next.getFullYear() - today.getFullYear()) * 12 +
-        (next.getMonth() - today.getMonth());
-
-      let daysPart = next.getDate() - today.getDate();
-      if (daysPart < 0) {
-        monthsLeft -= 1;
-        daysPart += new Date(next.getFullYear(), next.getMonth(), 0).getDate();
-      }
-
-      this.nextBirthday = {
-        date: next,
-        monthsLeft,
-        daysPart,
-        daysLeft,
-        hoursLeft: daysLeft * 24,
-        minutesLeft: daysLeft * 24 * 60,
-        secondsLeft: daysLeft * 24 * 60 * 60
-      };
-    },
-
     formatInteger(v) {
-      return typeof v === 'number' ? v.toLocaleString(APP_CONFIG.LOCALE) : v;
+      return typeof v === 'number'
+        ? v.toLocaleString(APP_CONFIG.LOCALE)
+        : v;
     },
 
     formatDecimal(v, d = 1) {
@@ -264,7 +291,6 @@ window.FunFactsCard = {
 
     onLangChanged(e) {
       this.lang = (e && e.detail && e.detail.lang) || APP_CONFIG.LANG;
-      this.$forceUpdate();
     }
   }
 };
